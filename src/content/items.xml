@@ -1,0 +1,3 @@
+<items gfxroot="gfx/items/" version="1">
+	<active achievement="36" description="Mass room damage" gfx="Collectibles_035_TheNecronomicon.png" id="35" maxcharges="3" name="The Necronomicon" />
+</items>
