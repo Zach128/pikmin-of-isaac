@@ -1,6 +1,12 @@
 {
     "Lua.diagnostics.globals": [
         "RegisterMod",
-        "Isaac"
-    ]
+        "Isaac",
+        "EntityType",
+        "Game",
+        "SFXManager",
+        "ModCallbacks",
+        "Vector"
+    ],
+    "editor.wordWrap": "on"
 }
