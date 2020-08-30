@@ -1,5 +1,5 @@
 <entities anm2root="gfx/" version="5">
-    <entity id="450" variant="0" name="Pik" reroll="true" baseHP="3" stageHP="1" boss="0" champion="0" collisionDamage="0" collisionMass="6" collisionRadius="9" friction="1" numGridCollisionPoints="12" shadowSize="12" portrait="85" anm2path="450.000_Pik.anm2" bestiary="true" bestiaryTransform="0,0,1" bestiaryAnim="Planted">
+    <entity id="450" variant="0" name="Pik" reroll="true" baseHP="3" stageHP="1" boss="0" champion="0" collisionDamage="0" collisionMass="6" collisionRadius="6" friction="0" numGridCollisionPoints="12" shadowSize="12" portrait="85" anm2path="450.000_Pik.anm2" bestiary="true" bestiaryTransform="0,0,1" bestiaryAnim="Planted">
         <gibs amount="5" blood="1" bone="0" eye="1" gut="0" large="0" poop="0" />
         <preload-snd id="60" /> <!-- SOUND_BABY_HURT -->
     </entity>

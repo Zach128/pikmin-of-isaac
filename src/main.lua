@@ -1,14 +1,13 @@
-StartDebug()
-
 local Mod = RegisterMod("Pikmin of Isaac", 1)
 local game = Game()
 local sound = SFXManager()
 
 local Pik = {}
+local Debug = {}
 
 EntityType.ENTITY_PIK = Isaac.GetEntityTypeByName("Pik")
 
-MDState = {
+PikState = {
     APPEAR = 0,
     DISMISS_IDLE = 1,
     DISMISS_ACTIVATE = 2,
@@ -22,8 +21,8 @@ MDState = {
 
 function Pik:PikInit(player)
     if game:GetFrameCount() == 1 then
-        for x = 0,2 do
-            for y = 0,2 do
+        for x = 1,1 do
+            for y = 1,1 do
                 Isaac.Spawn(EntityType.ENTITY_PIK, 0, 0, Vector(270 + 50*x, 200 + 50*y), Vector(0,0), nil)
             end
         end
@@ -32,58 +31,68 @@ end
 
 -- Main entrypoint for the Pik entity
 function Pik:PikUpdate(entity)
-    Isaac.DebugString("Pik!")
-    -- local data = entity:GetData(EntityType.ENTITY_PIK)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
 
-    -- Isaac.DebugString(string.format("StateFrame: %s", table.tostring(data)))
+    -- Initialise the base data and state
+    if data.State == nil then data.State = 0 end
+    if data.StateFrame == nil then data.StateFrame = 0 end
+    entity.StateFrame = entity.StateFrame + 1
+    
+    -- Print basic debug data.
+    Isaac.DebugString(string.format("State: %s", Debug:ResolveTableKey(NpcState, entity.State)))
+    Isaac.DebugString(string.format("PikState: %s", Debug:ResolveTableKey(PikState, data.State)))
+    Isaac.DebugString(string.format("StateFrame: %d", entity.StateFrame))
+    
+    -- Immediately go to the dismissal state.
+    if entity.State == NpcState.STATE_INIT and sprite:IsFinished("Appear") then
+        Pik:SetState(entity, PikState.ACTIVE_DISMISS)
+        entity.StateFrame = 0
+    end
 
-    -- if type(data) == "table" then
-    --     -- Initialise the base data and state
-    --     if data.State == nil then data.State = 0 end
-    --     if data.StateFrame == nil then data.StateFrame = 0 end
-    
-    --     local playerTarget = entity:GetPlayerTarget()
-    
-    --     data.StateFrame = data.StateFrame + 1
-    
-    --     if data.State == MDState.APPEAR and entity:GetSprite():IsFinished("Appear") then
-    --         data.State = MDState.DISMISS_IDLE
-    --         data.StateFrame = 0
-    --     elseif data.State == MDState.DISMISS_IDLE then
-    --         -- Stay jiving in the spot, forever (or until we change it).
-    --         if data.StateFrame == 1 then
-    --             entity:GetSprite():Play("Planted", true)
-    --         end
-    --     elseif data.State == MDState.DISMISS_ACTIVATE then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_IDLE then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_FOLLOW then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_CHASE then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_ATTACK then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_SHAKEOFF then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     elseif data.State == MDState.ACTIVE_DISMISS then
-    --         -- if data.StateFrame == 1 then
-    --         -- end
-    --     end
-    -- end
+    -- Handle the pik's planted state
+    Pik:Planted(entity)
 
+    -- Handle direction-facing
     if entity.Velocity.X > 0 then
-        entity:GetSprite().FlipX = true
+        sprite.FlipX = true
     else 
-        entity:GetSprite().FlipX = false
+        sprite.FlipX = false
+    end
+end
+
+-- Handle the Planted states for Pik entities.
+function Pik:Planted(entity)
+    local data = entity:GetData()
+    local sprite = entity:GetSprite()
+
+    if data.State == PikState.ACTIVE_DISMISS and entity.StateFrame == 0 then
+        sprite:Play("GoPlanted")
+    elseif sprite:IsFinished("GoPlanted") then
+        Pik:SetState(entity, PikState.DISMISS_IDLE)
+        sprite:Play("Planted")
+    end
+end
+
+-- Handle state-management for Pik entities.
+function Pik:SetState(entity, pikState)
+    local data = entity:GetData()
+
+    if PikState.ACTIVE_DISMISS == pikState then
+        data.State = PikState.ACTIVE_DISMISS
+        entity.State = NpcState.STATE_IDLE
+    elseif PikState.DISMISS_IDLE == pikState then
+        data.State = PikState.DISMISS_IDLE
+        entity.State = NpcState.STATE_IDLE
     end
 end
 
 Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.PikInit)
-Mod:AddCallback(0, Pik.PikUpdate, EntityType.ENTITY_PIK)
+Mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, Pik.PikUpdate, EntityType.ENTITY_PIK)
+
+function Debug:ResolveTableKey(tbl, val)
+    for k, v in pairs(tbl) do
+        if v == val then return k end
+    end
+    return nil
+end
