@@ -81,6 +81,9 @@ function Pik:SetState(entity, pikState)
     if PikState.ACTIVE_DISMISS == pikState then
         data.State = PikState.ACTIVE_DISMISS
         entity.State = NpcState.STATE_IDLE
+
+        -- Disable all collisions with enemies, bullets, etc.
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
     elseif PikState.DISMISS_IDLE == pikState then
         data.State = PikState.DISMISS_IDLE
         entity.State = NpcState.STATE_IDLE
