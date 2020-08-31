@@ -3,7 +3,8 @@ local game = Game()
 local sound = SFXManager()
 
 local Pik = {}
-local Debug = {}
+
+helpers = require("helpers")
 
 EntityType.ENTITY_PIK = Isaac.GetEntityTypeByName("Pik")
 
@@ -40,8 +41,8 @@ function Pik:PikUpdate(entity)
     entity.StateFrame = entity.StateFrame + 1
     
     -- Print basic debug data.
-    Isaac.DebugString(string.format("State: %s", Debug:ResolveTableKey(NpcState, entity.State)))
-    Isaac.DebugString(string.format("PikState: %s", Debug:ResolveTableKey(PikState, data.State)))
+    Isaac.DebugString(string.format("State: %s", helpers:ResolveTableKey(NpcState, entity.State)))
+    Isaac.DebugString(string.format("PikState: %s", helpers:ResolveTableKey(PikState, data.State)))
     Isaac.DebugString(string.format("StateFrame: %d", entity.StateFrame))
     
     -- Immediately go to the dismissal state.
@@ -92,10 +93,3 @@ end
 
 Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.PikInit)
 Mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, Pik.PikUpdate, EntityType.ENTITY_PIK)
-
-function Debug:ResolveTableKey(tbl, val)
-    for k, v in pairs(tbl) do
-        if v == val then return k end
-    end
-    return nil
-end

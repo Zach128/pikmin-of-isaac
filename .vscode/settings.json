@@ -6,7 +6,9 @@
         "Game",
         "SFXManager",
         "ModCallbacks",
-        "Vector"
+        "Vector",
+        "NpcState",
+        "EntityCollisionClass"
     ],
     "editor.wordWrap": "on"
 }
