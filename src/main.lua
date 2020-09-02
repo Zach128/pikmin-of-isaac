@@ -6,7 +6,7 @@ local Pik = {}
 
 helpers = require("helpers")
 
-EntityType.ENTITY_PIK = Isaac.GetEntityTypeByName("Pik")
+FamiliarVariant.PIK = Isaac.GetEntityVariantByName("Pik")
 
 PikState = {
     APPEAR = 0,
@@ -36,14 +36,18 @@ local debugRenderRGBA = {
   A = 255
 }
 
-function Pik:PikInit(player)
+function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
         for x = 1,1 do
             for y = 1,1 do
-                Isaac.Spawn(EntityType.ENTITY_PIK, 0, 0, Vector(270 + 50*x, 200 + 50*y), Vector(0,0), nil)
+                Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.PIK, 0, Vector(270 + 50*x, 200 + 50*y), Vector(0,0), nil):ToFamiliar()
             end
         end
     end
+end
+
+function Pik:OnPikSpawn(entity)
+    entity.IsFollower = true
 end
 
 -- Main entrypoint for the Pik entity
@@ -56,15 +60,13 @@ function Pik:PikUpdate(entity)
     if data.StateFrame == nil then data.StateFrame = 0 end
 
     data.StateFrame = data.StateFrame + 1
-    entity.StateFrame = entity.StateFrame + 1
     
     -- Print basic debug data.
     Isaac.DebugString(string.format("State: %s", helpers:ResolveTableKey(NpcState, entity.State)))
     Isaac.DebugString(string.format("PikState: %s", helpers:ResolveTableKey(PikState, data.State)))
-    Isaac.DebugString(string.format("StateFrame: %d", entity.StateFrame))
     
     -- Immediately go to the dismissal state.
-    if entity.State == NpcState.STATE_INIT and sprite:IsFinished("Appear") then
+    if entity.State == NpcState.STATE_INIT then
         Pik:SetState(entity, PikState.ACTIVE_DISMISS)
     end
 
@@ -84,7 +86,7 @@ function Pik:Planted(entity)
     local data = entity:GetData()
     local sprite = entity:GetSprite()
 
-    if data.State == PikState.ACTIVE_DISMISS and entity.StateFrame == 0 then
+    if data.State == PikState.ACTIVE_DISMISS and data.StateFrame == 0 then
         sprite:Play("GoPlanted")
     elseif sprite:IsFinished("GoPlanted") then
         Pik:SetState(entity, PikState.DISMISS_IDLE)
@@ -108,10 +110,10 @@ end
 function Pik:PlayerNearPlanted(entity)
     -- Get the nearest player and their distance from this pik.
     local closePlayer = game:GetNearestPlayer(entity.Position)
-    local playerDist = entity.Position - closePlayer.Position
+    local playerDist = closePlayer.Position - entity.Position
 
     -- Log the distance.
-    debugRenderStr = string.format("dist: %f,%f", playerDist.X, playerDist.Y)
+    debugRenderStr = string.format("dist: %d,%d", playerDist.X//1, playerDist.Y//1)
     Isaac.DebugString(debugRenderStr)
 
     -- Check if player is in range. If so, return them.
@@ -131,14 +133,12 @@ function Pik:SetState(entity, pikState)
         data.State = PikState.ACTIVE_DISMISS
         data.StateFrame = 0
         entity.State = NpcState.STATE_IDLE
-        entity.StateFrame = 0
         -- Disable all collisions with enemies, bullets, etc.
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
     elseif PikState.DISMISS_IDLE == pikState then
         data.State = PikState.DISMISS_IDLE
         data.StateFrame = 0
         entity.State = NpcState.STATE_IDLE
-        entity.StateFrame = 0
     end
 end
 
@@ -147,5 +147,6 @@ function Mod:RenderDebugStr()
 end
 
 Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Mod.RenderDebugStr)
-Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.PikInit)
-Mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, Pik.PikUpdate, EntityType.ENTITY_PIK)
+Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.SpawnPiks)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, Pik.OnPikSpawn, FamiliarVariant.PIK)
+Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, Pik.PikUpdate, FamiliarVariant.PIK)
