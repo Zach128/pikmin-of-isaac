@@ -9,7 +9,8 @@
         "Vector",
         "NpcState",
         "EntityCollisionClass",
-        "FamiliarVariant"
+        "FamiliarVariant",
+        "Sprite"
     ],
     "editor.wordWrap": "on"
 }
