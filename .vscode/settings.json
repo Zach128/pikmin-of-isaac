@@ -10,7 +10,9 @@
         "NpcState",
         "EntityCollisionClass",
         "FamiliarVariant",
-        "Sprite"
+        "Sprite",
+        "RNG",
+        "CacheFlag"
     ],
     "editor.wordWrap": "on"
 }

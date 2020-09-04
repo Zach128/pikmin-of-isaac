@@ -52,13 +52,18 @@ function PikPickup:SaveState()
 end
 
 function PikPickup:onUpdate(player)
-    -- Give the player an initial batch of piks.
+
     if game:GetFrameCount() == 1 then
-        player:GetData().Piks = 20
+        -- If we started a new game, give ourselves a handful of piks.
+        player:GetData().Piks = 5
+        PikPickup:SaveState()
+        PikPickup:InvalidatePiks(player)
     elseif player.FrameCount == 1 and PikPickup.Mod:HasData() then
+        -- Otherwise. load up our previous save-state.
         local ModData = PikPickup.Mod:LoadData()
         -- Load the first two characters as the number of piks the player has.
         player:GetData().Piks = tonumber(ModData:sub(1,2))
+        PikPickup:InvalidatePiks(player)
     end
 
     -- Loop through all entities currently on-screen.
@@ -77,7 +82,9 @@ function PikPickup:onUpdate(player)
                 entity:GetSprite():Play("Collect", true)
                 sound:Play(SoundEffect.SOUND_PLOP, 1, 0, false, 1)
                 if entity.SubType == PikSubType.PIK_BLUE then
+
                     player:GetData().Piks = math.min(player:GetData().Piks + 1, MAX_PIKS)
+                    PikPickup:InvalidatePiks(player)
                 end
 
                 -- Save state afterwards in case the player exits
@@ -93,6 +100,13 @@ function PikPickup:onUpdate(player)
             entity:Remove()
         end
     end
+end
+
+-- Invalidates the familiar cache to despawn/respawn necessary piks
+function PikPickup:InvalidatePiks(player)
+  -- Invalidate the familiars cache to spawn the new familiars.
+  player:AddCacheFlags(CacheFlag.CACHE_FAMILIARS)
+  player:EvaluateItems()
 end
 
 function PikPickup:onRender()

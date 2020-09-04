@@ -140,6 +140,16 @@ function Pik:SetState(entity, pikState)
     end
 end
 
+function Pik:onCache(player, cacheFlag)
+    if cacheFlag == CacheFlag.CACHE_FAMILIARS then
+        Isaac.DebugString("Checking Familiars")
+        if player:GetData().Piks ~= nil then
+            Isaac.DebugString("  Checking Piks")
+            player:CheckFamiliar(FamiliarVariant.PIK, player:GetData().Piks, RNG())
+        end
+    end
+end
+
 function Pik:RenderDebugStr()
     Isaac.RenderText(debugRenderStr, 100, 100, debugRenderRGBA.R, debugRenderRGBA.G, debugRenderRGBA.B, debugRenderRGBA.A)
 end
@@ -147,6 +157,7 @@ end
 function Pik:InjectCallbacks(Mod)
     Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Pik.RenderDebugStr)
     Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.SpawnPiks)
+    Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, Pik.onCache)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, Pik.OnPikSpawn, FamiliarVariant.PIK)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, Pik.PikUpdate, FamiliarVariant.PIK)
 end
