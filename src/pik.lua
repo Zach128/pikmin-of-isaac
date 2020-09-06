@@ -11,10 +11,10 @@ PikState = {
     DISMISS_ACTIVATE = 2,
     ACTIVE_IDLE = 3,
     ACTIVE_FOLLOW = 4,
-    ACTIVE_CHASE = 3,
-    ACTIVE_ATTACK = 4,
-    ACTIVE_SHAKEOFF = 5,
-    ACTIVE_DISMISS = 6,
+    ACTIVE_CHASE = 5,
+    ACTIVE_ATTACK = 6,
+    ACTIVE_SHAKEOFF = 7,
+    ACTIVE_DISMISS = 8,
 }
 
 -- Player trigger radious and offsets round a planted pik.
