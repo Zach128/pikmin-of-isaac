@@ -46,6 +46,9 @@ end
 
 function Pik:OnPikSpawn(entity)
     entity.IsFollower = true
+    -- Start out dismissed
+    Pik:SetState(entity, PikState.DISMISS_ACTIVATE)
+    -- Pik:SetState(entity, PikState.ACTIVE_DISMISS)
 end
 
 -- Main entrypoint for the Pik entity
@@ -64,18 +67,36 @@ function Pik:PikUpdate(entity)
     Isaac.DebugString(string.format("PikState: %s", helpers:ResolveTableKey(PikState, data.State)))
     
     -- Immediately go to the dismissal state.
-    if entity.State == NpcState.STATE_INIT then
-        Pik:SetState(entity, PikState.ACTIVE_DISMISS)
-    end
 
-    -- Handle the pik's planted state
+    -- Handle the pik's planted states
     Pik:Planted(entity)
 
+    -- Handle the pik's active states
+    Pik:Active(entity)
+
     -- Handle direction-facing
-    if entity.Velocity.X > 0 then
+    if entity.Velocity.X < 0 then
         sprite.FlipX = true
     else 
         sprite.FlipX = false
+    end
+end
+
+function Pik:Active(entity)
+    local data = entity:GetData()
+    local sprite = entity:GetSprite()
+
+    if data.State == PikState.ACTIVE_FOLLOW then
+        
+        if data.StateFrame == 1 then 
+            sprite:Play("Move")
+
+            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        end
+        
+        -- Follow its target
+        entity:FollowParent()
     end
 end
 
@@ -84,7 +105,7 @@ function Pik:Planted(entity)
     local data = entity:GetData()
     local sprite = entity:GetSprite()
 
-    if data.State == PikState.ACTIVE_DISMISS and data.StateFrame == 0 then
+    if data.State == PikState.ACTIVE_DISMISS and data.StateFrame == 1 then
         sprite:Play("GoPlanted")
     elseif sprite:IsFinished("GoPlanted") then
         Pik:SetState(entity, PikState.DISMISS_IDLE)
@@ -101,6 +122,10 @@ function Pik:Planted(entity)
             debugRenderRGBA.R = 255
             debugRenderRGBA.G = 0
         end
+    elseif data.State == PikState.DISMISS_ACTIVATE and data.StateFrame == 1 then
+        sprite:Play("UnPlanted")
+    elseif sprite:IsFinished("UnPlanted") and data.State == PikState.DISMISS_ACTIVATE then
+        Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
     end
 end
 
@@ -109,10 +134,6 @@ function Pik:PlayerNearPlanted(entity)
     -- Get the nearest player and their distance from this pik.
     local closePlayer = game:GetNearestPlayer(entity.Position)
     local playerDist = closePlayer.Position - entity.Position
-
-    -- Log the distance.
-    debugRenderStr = string.format("dist: %d,%d", playerDist.X//1, playerDist.Y//1)
-    Isaac.DebugString(debugRenderStr)
 
     -- Check if player is in range. If so, return them.
     if
@@ -137,14 +158,21 @@ function Pik:SetState(entity, pikState)
         data.State = PikState.DISMISS_IDLE
         data.StateFrame = 0
         entity.State = NpcState.STATE_IDLE
+    elseif PikState.DISMISS_ACTIVATE == pikState then
+        data.State = PikState.DISMISS_ACTIVATE
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_IDLE
+    elseif PikState.ACTIVE_FOLLOW == pikState then
+        data.State = PikState.ACTIVE_FOLLOW
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_MOVE
     end
 end
 
 function Pik:onCache(player, cacheFlag)
     if cacheFlag == CacheFlag.CACHE_FAMILIARS then
-        Isaac.DebugString("Checking Familiars")
+        -- If the player data was initialised, check that the appropriate piks are present.
         if player:GetData().Piks ~= nil then
-            Isaac.DebugString("  Checking Piks")
             player:CheckFamiliar(FamiliarVariant.PIK, player:GetData().Piks, RNG())
         end
     end
