@@ -169,6 +169,16 @@ function Pik:SetState(entity, pikState)
     end
 end
 
+function Pik:onCollision(pikEntity, collEntity, low)
+    Isaac.DebugString("Collision with " .. helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
+
+    -- Enforce player collision
+    if collEntity.Type == EntityType.ENTITY_PLAYER then
+        Isaac.DebugString("Player hit!")
+        return false
+    end
+end
+
 function Pik:onCache(player, cacheFlag)
     if cacheFlag == CacheFlag.CACHE_FAMILIARS then
         -- If the player data was initialised, check that the appropriate piks are present.
@@ -188,6 +198,7 @@ function Pik:InjectCallbacks(Mod)
     Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, Pik.onCache)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, Pik.OnPikSpawn, FamiliarVariant.PIK)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, Pik.PikUpdate, FamiliarVariant.PIK)
+    Mod:AddCallback(ModCallbacks.MC_PRE_FAMILIAR_COLLISION, Pik.onCollision, FamiliarVariant.PIK)
 end
 
 return Pik
