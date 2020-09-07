@@ -98,8 +98,7 @@ function Pik:Active(entity)
             entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
 
             local piks = Pik:GetRoomPiks()
-
-            StartDebug()
+            
             if not ranBoid then
                 ranBoid = true
                 PikBoid:UpdateBoid(piks)
