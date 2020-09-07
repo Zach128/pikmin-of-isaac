@@ -12,7 +12,10 @@
         "FamiliarVariant",
         "Sprite",
         "RNG",
-        "CacheFlag"
+        "CacheFlag",
+        "PickupVariant",
+        "SoundEffect",
+        "EntityGridCollisionClass"
     ],
     "editor.wordWrap": "on"
 }

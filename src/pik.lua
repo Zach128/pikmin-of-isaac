@@ -1,7 +1,8 @@
 local game = Game()
 local Pik = {}
 
-helpers = require("helpers")
+Helpers = require("helpers")
+PikBoid = require("pik_boid")
 
 -- Define enums
 FamiliarVariant.PIK = Isaac.GetEntityVariantByName("Pik")
@@ -34,6 +35,8 @@ local debugRenderRGBA = {
   A = 255
 }
 
+local ranBoid = false
+
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
         for x = 1,1 do
@@ -63,8 +66,8 @@ function Pik:PikUpdate(entity)
     data.StateFrame = data.StateFrame + 1
     
     -- Print basic debug data.
-    Isaac.DebugString(string.format("State: %s", helpers:ResolveTableKey(NpcState, entity.State)))
-    Isaac.DebugString(string.format("PikState: %s", helpers:ResolveTableKey(PikState, data.State)))
+    Isaac.DebugString(string.format("State: %s", Helpers:ResolveTableKey(NpcState, entity.State)))
+    Isaac.DebugString(string.format("PikState: %s", Helpers:ResolveTableKey(PikState, data.State)))
     
     -- Immediately go to the dismissal state.
 
@@ -93,6 +96,14 @@ function Pik:Active(entity)
 
             entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
             entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+            local piks = Pik:GetRoomPiks()
+
+            StartDebug()
+            if not ranBoid then
+                ranBoid = true
+                PikBoid:UpdateBoid(piks)
+            end
         end
         
         -- Follow its target
@@ -170,7 +181,7 @@ function Pik:SetState(entity, pikState)
 end
 
 function Pik:onCollision(pikEntity, collEntity, low)
-    Isaac.DebugString("Collision with " .. helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
+    Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
     -- Enforce player collision
     if collEntity.Type == EntityType.ENTITY_PLAYER then
@@ -186,6 +197,21 @@ function Pik:onCache(player, cacheFlag)
             player:CheckFamiliar(FamiliarVariant.PIK, player:GetData().Piks, RNG())
         end
     end
+end
+
+function Pik:GetRoomPiks()
+    local allEntities = Isaac.GetRoomEntities()
+    local totalEntities = #allEntities
+    local pikEntities = {}
+
+    for i,entity in pairs(allEntities)
+    do
+        if entity.Type == EntityType.ENTITY_FAMILIAR and entity.Variant == FamiliarVariant.PIK then
+            table.insert(pikEntities, entity)
+        end
+    end
+
+    return pikEntities
 end
 
 function Pik:RenderDebugStr()

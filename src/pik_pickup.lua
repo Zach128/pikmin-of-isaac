@@ -3,7 +3,7 @@ local sound = SFXManager()
 
 local PikPickup = {}
 
-helpers = require("helpers")
+Helpers = require("helpers")
 
 PickupVariant.PICKUP_PIK = Isaac.GetEntityVariantByName("Blue Pik Seed")
 PikSubType = {
