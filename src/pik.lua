@@ -97,16 +97,15 @@ function Pik:Active(entity)
             entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
             entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
 
-            local piks = Pik:GetRoomPiks()
             
             if not ranBoid then
                 ranBoid = true
-                PikBoid:UpdateBoid(piks)
             end
         end
         
         -- Follow its target
-        entity:FollowParent()
+        local piks = Pik:GetRoomPiks()
+        PikBoid:UpdateBoid(piks)
     end
 end
 

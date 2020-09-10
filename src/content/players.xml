@@ -1,9 +1,0 @@
-<players root="gfx/characters/costumes/" 
-         portraitroot="gfx/ui/boss/" 
-         nameimageroot="gfx/ui/boss/" 
-         bigportraitroot="gfx/ui/stage/">
-	<player id="1" name="Zagdalene" skin="Character_002_Magdalene.png" costume="7" hp="8" items="35"
-          nameimage="PlayerName_02_Magdalene.png"
-          portrait="PlayerPortrait_02_Magdalene.png" 
-          bigportrait="PlayerPortraitBig_02_Magdalene.png" skinColor="-1" />
-</players>

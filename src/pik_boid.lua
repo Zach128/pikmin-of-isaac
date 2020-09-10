@@ -3,6 +3,13 @@
 
 local PikBoid = {}
 
+-- The final speed is campled to 0 if smaller than this.
+PikBoid.ClampToTarget = 0.5
+-- The final speed is limited by this amount
+PikBoid.SpeedLimit = 3
+-- How much to separate from other piks
+PikBoid.SpacingTarget = 25
+
 function PikBoid:UpdateBoid(piks)
 
     local v1, v2, v3
@@ -24,8 +31,11 @@ function PikBoid:UpdateBoid(piks)
 
         local finalVelocity = v1 + v2 + v3
         
+        PikBoid:LimitVelocity(finalVelocity)
+        PikBoid:SoftenTargetApproach(finalVelocity)
+
         Isaac.DebugString("  Boid calc finished with result " .. finalVelocity.X .. ", " .. finalVelocity.Y)
-        
+
         targetPik.Velocity = finalVelocity
     end
 
@@ -52,7 +62,7 @@ function PikBoid:CalculateAlignment(piks, targetPik)
   do
     local distanceMag = PikBoid:AbsVector(otherPik.Position - targetPik.Position)
     
-    if otherPik.Position:Distance(targetPik.Position) < 100 then
+    if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
       finalVector = finalVector - (otherPik.Position - targetPik.Position)
     end
   end
@@ -99,6 +109,25 @@ end
 
 function PikBoid:AbsVector(vec)
   return Vector(math.abs(vec.X), math.abs(vec.Y))
+end
+
+function PikBoid:LimitVelocity(v)
+  local limit = PikBoid.SpeedLimit
+
+  if v:Length() > limit then
+    v:Resize(limit)
+  end
+
+  return v
+end
+
+function PikBoid:SoftenTargetApproach(v)
+  if math.abs(v:Length()) < PikBoid.ClampToTarget then
+    v.X = 0
+    v.Y = 0
+  end
+
+  return v
 end
 
 return PikBoid
