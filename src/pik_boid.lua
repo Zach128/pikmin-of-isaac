@@ -4,15 +4,16 @@
 local PikBoid = {}
 
 -- The final speed is campled to 0 if smaller than this.
-PikBoid.ClampToTarget = 0.5
+PikBoid.ClampToTarget = 1
 -- The final speed is limited by this amount
-PikBoid.SpeedLimit = 3
+PikBoid.SpeedLimit = 5
+PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
 PikBoid.SpacingTarget = 25
 
 function PikBoid:UpdateBoid(piks)
 
-    local v1, v2, v3
+    local v1, v2, v3, v4
 
     Isaac.DebugString("Updating boids")
 
@@ -21,6 +22,7 @@ function PikBoid:UpdateBoid(piks)
         v1 = PikBoid:CalculateSeparation(piks, targetPik)
         v2 = PikBoid:CalculateAlignment(piks, targetPik)
         v3 = PikBoid:CalculateCohesion(piks, targetPik)
+        v4 = PikBoid:TendToPlace(targetPik)
 
         Isaac.DebugString("  Calculating boid for pik " .. tostring(i))
 
@@ -29,7 +31,7 @@ function PikBoid:UpdateBoid(piks)
             Isaac.DebugString("    Entered inequality iterator with pik " .. tostring(otherPik))
         end
 
-        local finalVelocity = v1 + v2 + v3
+        local finalVelocity = v1 + v2 + v3 + v4
         
         PikBoid:LimitVelocity(finalVelocity)
         PikBoid:SoftenTargetApproach(finalVelocity)
@@ -59,9 +61,7 @@ function PikBoid:CalculateAlignment(piks, targetPik)
   local finalVector = Vector(0, 0)
   
   for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
-  do
-    local distanceMag = PikBoid:AbsVector(otherPik.Position - targetPik.Position)
-    
+  do    
     if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
       finalVector = finalVector - (otherPik.Position - targetPik.Position)
     end
@@ -82,6 +82,12 @@ function PikBoid:CalculateCohesion(piks, targetPik)
   finalVector = finalVector / (totalPiks - 1)
   
   return (finalVector - targetPik.Velocity) / 8
+end
+
+-- Set a goal for the boid to move to a target position.
+function PikBoid:TendToPlace(pik)
+  local target = Isaac.GetPlayer(0).Position
+  return (target - pik.Position) / (100 / PikBoid.SpeedCoefficient)
 end
 
 -- Higher-order iterator for boid calculations which iterates over every element NOT equal to the given filter.
