@@ -35,8 +35,6 @@ local debugRenderRGBA = {
   A = 255
 }
 
-local ranBoid = false
-
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
         for x = 1,1 do
@@ -96,13 +94,14 @@ function Pik:Active(entity)
 
             entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
             entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-
-            
-            if not ranBoid then
-                ranBoid = true
-            end
         end
         
+        if entity.Velocity:Length() <= 0.1 and not sprite:IsPlaying("Idle") then
+            sprite:Play("Idle", true)
+        elseif entity.Velocity:Length() > 0.1 and not sprite:IsPlaying("Move") then
+            sprite:Play("Move", true)
+        end
+
         -- Follow its target
         local piks = Pik:GetRoomPiks()
         PikBoid:UpdateBoid(piks)

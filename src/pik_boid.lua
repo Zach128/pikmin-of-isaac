@@ -9,7 +9,7 @@ PikBoid.ClampToTarget = 1
 PikBoid.SpeedLimit = 5
 PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
-PikBoid.SpacingTarget = 25
+PikBoid.SpacingTarget = 30
 
 function PikBoid:UpdateBoid(piks)
 
@@ -87,7 +87,7 @@ end
 -- Set a goal for the boid to move to a target position.
 function PikBoid:TendToPlace(pik)
   local target = Isaac.GetPlayer(0).Position
-  return (target - pik.Position) / (100 / PikBoid.SpeedCoefficient)
+  return (target - pik.Position) / (100 - PikBoid.SpeedCoefficient)
 end
 
 -- Higher-order iterator for boid calculations which iterates over every element NOT equal to the given filter.
