@@ -1,6 +1,21 @@
 {
     "Lua.diagnostics.globals": [
         "RegisterMod",
-        "Isaac"
-    ]
+        "Isaac",
+        "EntityType",
+        "Game",
+        "SFXManager",
+        "ModCallbacks",
+        "Vector",
+        "NpcState",
+        "EntityCollisionClass",
+        "FamiliarVariant",
+        "Sprite",
+        "RNG",
+        "CacheFlag",
+        "PickupVariant",
+        "SoundEffect",
+        "EntityGridCollisionClass"
+    ],
+    "editor.wordWrap": "on"
 }

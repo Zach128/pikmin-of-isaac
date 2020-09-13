@@ -1,0 +1,10 @@
+<entities anm2root="gfx/" version="5">
+    <entity id="3" name="Pik" reroll="true" baseHP="3" stageHP="1" boss="0" champion="0" collisionDamage="0" collisionMass="6" collisionRadius="6" friction="1" numGridCollisionPoints="12" shadowSize="6" portrait="85" anm2path="3.p01_pik.anm2" bestiary="true" bestiaryTransform="0,0,1" bestiaryAnim="Planted">
+        <gibs amount="5" blood="1" bone="0" eye="1" gut="0" large="0" poop="0" />
+        <preload-snd id="60" /> <!-- SOUND_BABY_HURT -->
+    </entity>
+    <entity anm2path="005_3030_BluePik.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="3" collisionRadius="12" friction="1" id="5" name="Blue Pik Seed" numGridCollisionPoints="24" shadowSize="13" stageHP="0" variant="3030" subtype="1">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+        <preload-snd id="201" /> <!-- FETUS_FEET -->
+    </entity>
+</entities>
