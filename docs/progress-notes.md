@@ -7,3 +7,4 @@
 * Added "_Blue Pik Seed_" pickups to spawn in new piks.
 * Tie pik familiars to total Blue Pik Seed count by the player, persisting this value between game sessions (closing and reopening the game).
 * Make piks follow player in traditional-to-Isaac, train-like behaviour.
+* Piks now use basic flock-like behaviour through boid algorithm.
