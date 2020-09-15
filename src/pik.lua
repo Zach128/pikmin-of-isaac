@@ -102,10 +102,34 @@ function Pik:Active(entity)
             sprite:Play("Move", true)
         end
 
-        -- Follow its target
+        -- Follow the player
         local piks = Pik:GetRoomPiks()
         PikBoid:UpdateBoid(piks)
+
+        Isaac.DebugString("Checking for enemy! Also note collision set to " .. Helpers:ResolveTableKey(EntityCollisionClass, entity.EntityCollisionClass))
+        Pik:PickEnemyTarget(entity)
+
+        if entity.Target ~= nil then
+            Pik:SetState(entity, PikState.ACTIVE_ATTACK)
+        end
+    elseif data.State == PikState.ACTIVE_ATTACK then
+
+        if data.StateFrame == 1 then
+            sprite:Play("Idle", true)
+        end
+
+        if entity.Target ~= nil then
+            entity:FollowPosition(entity.Target.Position)
+            debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+        end
     end
+end
+
+function Pik:PickEnemyTarget(pikEntity)
+    local entities = Isaac.FindInRadius(pikEntity.Position, 300, EntityPartition.ENEMY)
+    debugRenderStr = "Found " .. tostring(#entities) .. " enemies"
+
+    if #entities > 0 then pikEntity.Target = entities[1] end
 end
 
 -- Handle the Planted states for Pik entities.
@@ -174,17 +198,22 @@ function Pik:SetState(entity, pikState)
         data.State = PikState.ACTIVE_FOLLOW
         data.StateFrame = 0
         entity.State = NpcState.STATE_MOVE
+    elseif PikState.ACTIVE_ATTACK == pikState then
+        data.State = PikState.ACTIVE_ATTACK
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_ATTACK
     end
 end
 
 function Pik:onCollision(pikEntity, collEntity, low)
     Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
-    -- Enforce player collision
-    if collEntity.Type == EntityType.ENTITY_PLAYER then
-        Isaac.DebugString("Player hit!")
-        return false
-    end
+    -- -- Enforce enemy collision
+    -- if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
+    --     Isaac.DebugString("Hit an enemy!")
+    --     Pik:SetState(pikEntity, PikState.ACTIVE_ATTACK)
+    --     return false
+    -- end
 end
 
 function Pik:onCache(player, cacheFlag)
@@ -198,7 +227,6 @@ end
 
 function Pik:GetRoomPiks()
     local allEntities = Isaac.GetRoomEntities()
-    local totalEntities = #allEntities
     local pikEntities = {}
 
     for i,entity in pairs(allEntities)

@@ -15,7 +15,8 @@
         "CacheFlag",
         "PickupVariant",
         "SoundEffect",
-        "EntityGridCollisionClass"
+        "EntityGridCollisionClass",
+        "EntityPartition"
     ],
     "editor.wordWrap": "on"
 }
