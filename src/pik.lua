@@ -34,6 +34,7 @@ local debugRenderRGBA = {
   B = 0,
   A = 255
 }
+local debugUsingHealthBars = true
 
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
@@ -271,7 +272,14 @@ function Pik:RenderDebugStr()
     Isaac.RenderText(debugRenderStr, 100, 100, debugRenderRGBA.R, debugRenderRGBA.G, debugRenderRGBA.B, debugRenderRGBA.A)
 end
 
+function Pik:GiveSpiderMod(continuedGame)
+    if debugUsingHealthBars and not continuedGame then
+        Isaac.GetPlayer(0):AddCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD, 0, true)
+    end
+end
+
 function Pik:InjectCallbacks(Mod)
+    Mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, Pik.GiveSpiderMod)
     Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Pik.RenderDebugStr)
     Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.SpawnPiks)
     Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, Pik.onCache)
