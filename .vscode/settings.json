@@ -16,7 +16,8 @@
         "PickupVariant",
         "SoundEffect",
         "EntityGridCollisionClass",
-        "EntityPartition"
+        "EntityPartition",
+        "EntityRef"
     ],
     "editor.wordWrap": "on"
 }

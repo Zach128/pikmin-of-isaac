@@ -12,7 +12,7 @@ PikBoid.SpeedCoefficient = 1
 PikBoid.SpacingTarget = 30
 
 function PikBoid:UpdateJustStayAway(piks, entity)
-  local addedVector = PikBoid:CalculateAlignment(Pik:GetRoomPiks(), entity)
+  local addedVector = PikBoid:CalculateAlignment(piks, entity)
 
   addedVector = PikBoid:LimitVelocity(addedVector)
 

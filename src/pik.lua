@@ -92,16 +92,36 @@ function Pik:Attack(entity)
     local sprite = entity:GetSprite()
 
     if data.State == PikState.ACTIVE_ATTACK then
-        if data.StateFrame == 1 then
-            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
-            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        if entity.Target:IsDead() then
+            -- If our target is dead, the attack job is done; go back to following the player.
+            entity.Target = nil
 
-            -- Keep track of the initial offset from the target.
-            data.TargetAttachmentOffset = entity.Position - entity.Target.Position
+            Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
         else
-            -- Move the entity to the target's postion.
-            entity.Position = entity.Target.Position + data.TargetAttachmentOffset
-            entity.Velocity = entity.Target.Velocity
+            if data.StateFrame == 1 then
+                -- If we just entered this state, begin initialisation
+    
+                -- Disable all but basic collisions.
+                entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+    
+                -- Keep track of the initial offset from the target.
+                data.TargetAttachmentOffset = entity.Position - entity.Target.Position
+    
+                -- Start the Attack animation.
+                sprite:Play("Attack", true)
+            else
+                -- Move the entity to the target's postion.
+                entity.Position = entity.Target.Position + data.TargetAttachmentOffset
+                entity.Velocity = entity.Target.Velocity
+    
+                debugRenderStr = "Chasing vector " .. entity.Target.Position.X .. ", " .. entity.Target.Position.Y
+                
+                -- Attack the target, in sync with the attack animation.
+                if sprite:IsEventTriggered("Attack1") then
+                    entity.Target:TakeDamage(0.1, 0, EntityRef(entity), 1)
+                end
+            end
         end
     end
 end
@@ -126,7 +146,7 @@ function Pik:Active(entity)
         end
 
         -- Follow the player
-        local piks = Pik:GetRoomPiks()
+        local piks = Pik:GetRoomCollideablePiks()
         PikBoid:UpdateBoid(piks)
 
         Isaac.DebugString("Checking for enemy! Also note collision set to " .. Helpers:ResolveTableKey(EntityCollisionClass, entity.EntityCollisionClass))
@@ -144,7 +164,7 @@ function Pik:Active(entity)
         if entity.Target ~= nil then
             entity:FollowPosition(entity.Target.Position)
 
-            PikBoid:UpdateJustStayAway(Pik:GetRoomPiks(), entity)
+            PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
             -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
         end
     end
@@ -237,9 +257,12 @@ end
 function Pik:onCollision(pikEntity, collEntity, low)
     Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
-    -- -- Enforce enemy collision
+    -- Enforce enemy collision
     if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
         Isaac.DebugString("Hit an enemy! Attacking...")
+
+        -- Make sure we set the correct target based on the enemy we hit
+        pikEntity.Target = collEntity
 
         Pik:SetState(pikEntity, PikState.ACTIVE_ATTACK)
     end
@@ -254,13 +277,16 @@ function Pik:onCache(player, cacheFlag)
     end
 end
 
-function Pik:GetRoomPiks()
+function Pik:GetRoomCollideablePiks()
     local allEntities = Isaac.GetRoomEntities()
     local pikEntities = {}
 
     for i,entity in pairs(allEntities)
     do
-        if entity.Type == EntityType.ENTITY_FAMILIAR and entity.Variant == FamiliarVariant.PIK then
+        if entity.Type == EntityType.ENTITY_FAMILIAR
+        and entity.Variant == FamiliarVariant.PIK
+        and entity:GetData().State ~= PikState.ACTIVE_ATTACK
+        then
             table.insert(pikEntities, entity)
         end
     end
