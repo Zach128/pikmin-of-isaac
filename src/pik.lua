@@ -75,11 +75,33 @@ function Pik:PikUpdate(entity)
     -- Handle the pik's active states.
     Pik:Active(entity)
 
+    -- Handle the pik's attacking states.
+    Pik:Attack(entity)
+
     -- Handle direction-facing
     if entity.Velocity.X < 0 then
         sprite.FlipX = true
     else 
         sprite.FlipX = false
+    end
+end
+
+function Pik:Attack(entity)
+    local data = entity:GetData()
+    local sprite = entity:GetSprite()
+
+    if data.State == PikState.ACTIVE_ATTACK then
+        if data.StateFrame == 1 then
+            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+            -- Keep track of the initial offset from the target.
+            data.TargetAttachmentOffset = entity.Position - entity.Target.Position
+        else
+            -- Move the entity to the target's postion.
+            entity.Position = entity.Target.Position + data.TargetAttachmentOffset
+            entity.Velocity = entity.Target.Velocity
+        end
     end
 end
 
@@ -215,11 +237,11 @@ function Pik:onCollision(pikEntity, collEntity, low)
     Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
     -- -- Enforce enemy collision
-    -- if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
-    --     Isaac.DebugString("Hit an enemy!")
-    --     Pik:SetState(pikEntity, PikState.ACTIVE_ATTACK)
-    --     return false
-    -- end
+    if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
+        Isaac.DebugString("Hit an enemy! Attacking...")
+
+        Pik:SetState(pikEntity, PikState.ACTIVE_ATTACK)
+    end
 end
 
 function Pik:onCache(player, cacheFlag)
