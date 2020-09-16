@@ -11,6 +11,14 @@ PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
 PikBoid.SpacingTarget = 30
 
+function PikBoid:UpdateJustStayAway(piks, entity)
+  local addedVector = PikBoid:CalculateAlignment(Pik:GetRoomPiks(), entity)
+
+  addedVector = PikBoid:LimitVelocity(addedVector)
+
+  entity.Velocity = entity.Velocity + addedVector
+end
+
 function PikBoid:UpdateBoid(piks)
 
     local v1, v2, v3, v4

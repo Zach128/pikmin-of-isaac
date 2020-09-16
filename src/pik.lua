@@ -69,10 +69,10 @@ function Pik:PikUpdate(entity)
     
     -- Immediately go to the dismissal state.
 
-    -- Handle the pik's planted states
+    -- Handle the pik's planted states.
     Pik:Planted(entity)
 
-    -- Handle the pik's active states
+    -- Handle the pik's active states.
     Pik:Active(entity)
 
     -- Handle direction-facing
@@ -110,9 +110,9 @@ function Pik:Active(entity)
         Pik:PickEnemyTarget(entity)
 
         if entity.Target ~= nil then
-            Pik:SetState(entity, PikState.ACTIVE_ATTACK)
+            Pik:SetState(entity, PikState.ACTIVE_CHASE)
         end
-    elseif data.State == PikState.ACTIVE_ATTACK then
+    elseif data.State == PikState.ACTIVE_CHASE then
 
         if data.StateFrame == 1 then
             sprite:Play("Idle", true)
@@ -120,7 +120,9 @@ function Pik:Active(entity)
 
         if entity.Target ~= nil then
             entity:FollowPosition(entity.Target.Position)
-            debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+
+            PikBoid:UpdateJustStayAway(Pik:GetRoomPiks(), entity)
+            -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
         end
     end
 end
@@ -196,6 +198,10 @@ function Pik:SetState(entity, pikState)
         entity.State = NpcState.STATE_IDLE
     elseif PikState.ACTIVE_FOLLOW == pikState then
         data.State = PikState.ACTIVE_FOLLOW
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_MOVE
+    elseif PikState.ACTIVE_CHASE == pikState then
+        data.State = PikState.ACTIVE_CHASE
         data.StateFrame = 0
         entity.State = NpcState.STATE_MOVE
     elseif PikState.ACTIVE_ATTACK == pikState then
