@@ -107,6 +107,17 @@ function Pik:Attack(entity)
                 -- Start the Attack animation.
                 sprite:Play("Attack", true)
             else
+                if Pik:IsEnemyValidForAttack(entity.Target) then
+                    debugRenderRGBA.R = 0
+                    debugRenderRGBA.G = 255
+                else
+                    debugRenderRGBA.R = 255
+                    debugRenderRGBA.G = 0
+
+                    -- We lost our target! Go back to the player.
+                    Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
+                end
+
                 -- Move the entity to the target's postion.
                 entity.Position = entity.Target.Position + data.TargetAttachmentOffset
                 entity.Velocity = entity.Target.Velocity
@@ -172,8 +183,23 @@ function Pik:PickEnemyTarget(entity)
 
     local entities = Isaac.FindInRadius(entity.Position, 300, EntityPartition.ENEMY)
     debugRenderStr = "Found " .. tostring(#entities) .. " enemies"
+    
+    -- Loop through the obtained list and identify a valid target.
+    for i, enemy in pairs(entities) do
+        if entity.Target ~= nil then break end
 
-    if #entities > 0 then entity.Target = entities[1] end
+        if Pik:IsEnemyValidForAttack(enemy) then
+            entity.Target = enemy
+        end
+    end
+end
+
+function Pik:IsEnemyValidForAttack(enemy)
+    -- Helper function that checks if an enemy can in-fact be attacked by piks.
+    return enemy:IsVulnerableEnemy()-- Enemy needs to be vulnerable to attacks.
+    and enemy:IsVisible()           -- Piks can't attack what they can't see.
+    and not enemy:IsInvincible()    -- Double-check the enemy isn't invincible.
+    and enemy:IsActiveEnemy(false)  -- Ensure the enemy is in-fact active.
 end
 
 function Pik:Planted(entity)
@@ -266,7 +292,7 @@ function Pik:onCollision(pikEntity, collEntity, low)
     Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
     -- If we collide with an enemy, attack it.
-    if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
+    if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() and Pik:IsEnemyValidForAttack(collEntity) then
         Isaac.DebugString("Hit an enemy! Attacking...")
 
         -- Make sure we set the correct target based on the enemy we hit.
