@@ -34,6 +34,7 @@ local debugRenderRGBA = {
   B = 0,
   A = 255
 }
+local debugUsingHealthBars = true
 
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
@@ -69,11 +70,14 @@ function Pik:PikUpdate(entity)
     
     -- Immediately go to the dismissal state.
 
-    -- Handle the pik's planted states
+    -- Handle the pik's planted states.
     Pik:Planted(entity)
 
-    -- Handle the pik's active states
+    -- Handle the pik's active states.
     Pik:Active(entity)
+
+    -- Handle the pik's attacking states.
+    Pik:Attack(entity)
 
     -- Handle direction-facing
     if entity.Velocity.X < 0 then
@@ -83,33 +87,98 @@ function Pik:PikUpdate(entity)
     end
 end
 
+function Pik:Attack(entity)
+    local data = entity:GetData()
+    local sprite = entity:GetSprite()
+
+    if data.State == PikState.ACTIVE_ATTACK then
+        if entity.Target:IsDead() then
+            -- If our target is dead, the attack job is done; go back to following the player.
+            entity.Target = nil
+
+            Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
+        else
+            if data.StateFrame == 1 then
+                -- If we just entered this state, begin initialisation
+
+                -- Keep track of the initial offset from the target.
+                data.TargetAttachmentOffset = entity.Position - entity.Target.Position
+    
+                -- Start the Attack animation.
+                sprite:Play("Attack", true)
+            else
+                -- Move the entity to the target's postion.
+                entity.Position = entity.Target.Position + data.TargetAttachmentOffset
+                entity.Velocity = entity.Target.Velocity
+    
+                debugRenderStr = "Chasing vector " .. entity.Target.Position.X .. ", " .. entity.Target.Position.Y
+                
+                -- Attack the target, in sync with the attack animation.
+                if sprite:IsEventTriggered("Attack1") then
+                    entity.Target:TakeDamage(0.1, 0, EntityRef(entity), 1)
+                end
+            end
+        end
+    end
+end
+
 function Pik:Active(entity)
+    -- Handle all active states for Pik entities.
     local data = entity:GetData()
     local sprite = entity:GetSprite()
 
     if data.State == PikState.ACTIVE_FOLLOW then
         
+        -- Set up our pik's collision and initial following state.
         if data.StateFrame == 1 then 
             sprite:Play("Move")
-
-            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
-            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
         end
         
+        -- Select the appropriate animation based on their velocity.
         if entity.Velocity:Length() <= 0.1 and not sprite:IsPlaying("Idle") then
             sprite:Play("Idle", true)
         elseif entity.Velocity:Length() > 0.1 and not sprite:IsPlaying("Move") then
             sprite:Play("Move", true)
         end
 
-        -- Follow its target
-        local piks = Pik:GetRoomPiks()
+        -- Follow the player.
+        local piks = Pik:GetRoomCollideablePiks()
         PikBoid:UpdateBoid(piks)
+
+        Isaac.DebugString("Checking for enemy! Also note collision set to " .. Helpers:ResolveTableKey(EntityCollisionClass, entity.EntityCollisionClass))
+        Pik:PickEnemyTarget(entity)
+
+        -- If we picked up a target, begin chasing them.
+        if entity.Target ~= nil then
+            Pik:SetState(entity, PikState.ACTIVE_CHASE)
+        end
+    elseif data.State == PikState.ACTIVE_CHASE then
+
+        if data.StateFrame == 1 then
+            sprite:Play("Idle", true)
+        end
+
+        if entity.Target ~= nil then
+            entity:FollowPosition(entity.Target.Position)
+
+            PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
+            -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+        end
     end
 end
 
--- Handle the Planted states for Pik entities.
+function Pik:PickEnemyTarget(entity)
+    -- Pick a suitable enemy target for a pik to attack.
+
+    local entities = Isaac.FindInRadius(entity.Position, 300, EntityPartition.ENEMY)
+    debugRenderStr = "Found " .. tostring(#entities) .. " enemies"
+
+    if #entities > 0 then entity.Target = entities[1] end
+end
+
 function Pik:Planted(entity)
+    -- Handle the Planted states for Pik entities.
+
     local data = entity:GetData()
     local sprite = entity:GetSprite()
 
@@ -137,7 +206,6 @@ function Pik:Planted(entity)
     end
 end
 
--- Get the nearest player to a given pik
 function Pik:PlayerNearPlanted(entity)
     -- Get the nearest player and their distance from this pik.
     local closePlayer = game:GetNearestPlayer(entity.Position)
@@ -152,8 +220,9 @@ function Pik:PlayerNearPlanted(entity)
     end
 end
 
--- Handle state-management for Pik entities.
 function Pik:SetState(entity, pikState)
+    -- Handle state-management for Pik entities.
+
     local data = entity:GetData()
 
     if PikState.ACTIVE_DISMISS == pikState then
@@ -174,20 +243,41 @@ function Pik:SetState(entity, pikState)
         data.State = PikState.ACTIVE_FOLLOW
         data.StateFrame = 0
         entity.State = NpcState.STATE_MOVE
+
+        -- Ensure collisions are enabled.
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_GROUND
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+    elseif PikState.ACTIVE_CHASE == pikState then
+        data.State = PikState.ACTIVE_CHASE
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_MOVE
+    elseif PikState.ACTIVE_ATTACK == pikState then
+        data.State = PikState.ACTIVE_ATTACK
+        data.StateFrame = 0
+        entity.State = NpcState.STATE_ATTACK
+
+        -- Disable all but basic collisions.
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
     end
 end
 
 function Pik:onCollision(pikEntity, collEntity, low)
     Isaac.DebugString("Collision with " .. Helpers:ResolveTableKey(EntityType, collEntity.Type) .. ", low: " .. tostring(low))
 
-    -- Enforce player collision
-    if collEntity.Type == EntityType.ENTITY_PLAYER then
-        Isaac.DebugString("Player hit!")
-        return false
+    -- If we collide with an enemy, attack it.
+    if collEntity.Type ~= EntityType.ENTITY_PLAYER and collEntity:IsEnemy() then
+        Isaac.DebugString("Hit an enemy! Attacking...")
+
+        -- Make sure we set the correct target based on the enemy we hit.
+        pikEntity.Target = collEntity
+
+        Pik:SetState(pikEntity, PikState.ACTIVE_ATTACK)
     end
 end
 
 function Pik:onCache(player, cacheFlag)
+    -- Perform cache-related checks here such as ensuring expected on-screen pik count is met.
     if cacheFlag == CacheFlag.CACHE_FAMILIARS then
         -- If the player data was initialised, check that the appropriate piks are present.
         if player:GetData().Piks ~= nil then
@@ -196,14 +286,18 @@ function Pik:onCache(player, cacheFlag)
     end
 end
 
-function Pik:GetRoomPiks()
+function Pik:GetRoomCollideablePiks()
+    -- Get a list of all collideable piks in the room. This excludes those in an attack state of sorts.
+
     local allEntities = Isaac.GetRoomEntities()
-    local totalEntities = #allEntities
     local pikEntities = {}
 
     for i,entity in pairs(allEntities)
     do
-        if entity.Type == EntityType.ENTITY_FAMILIAR and entity.Variant == FamiliarVariant.PIK then
+        if entity.Type == EntityType.ENTITY_FAMILIAR
+        and entity.Variant == FamiliarVariant.PIK
+        and entity:GetData().State ~= PikState.ACTIVE_ATTACK
+        then
             table.insert(pikEntities, entity)
         end
     end
@@ -215,7 +309,16 @@ function Pik:RenderDebugStr()
     Isaac.RenderText(debugRenderStr, 100, 100, debugRenderRGBA.R, debugRenderRGBA.G, debugRenderRGBA.B, debugRenderRGBA.A)
 end
 
+function Pik:GiveSpiderMod(continuedGame)
+    -- Give the Spider Mod collectible to display enemy healthbars.
+
+    if debugUsingHealthBars and not continuedGame then
+        Isaac.GetPlayer(0):AddCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD, 0, true)
+    end
+end
+
 function Pik:InjectCallbacks(Mod)
+    Mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, Pik.GiveSpiderMod)
     Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Pik.RenderDebugStr)
     Mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, Pik.SpawnPiks)
     Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, Pik.onCache)
