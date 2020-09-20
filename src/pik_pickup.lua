@@ -81,10 +81,9 @@ function PikPickup:onUpdate(player)
                 entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
                 entity:GetSprite():Play("Collect", true)
                 sound:Play(SoundEffect.SOUND_PLOP, 1, 0, false, 1)
+                
                 if entity.SubType == PikSubType.PIK_BLUE then
-
-                    player:GetData().Piks = math.min(player:GetData().Piks + 1, MAX_PIKS)
-                    PikPickup:InvalidatePiks(player)
+                    PikPickup:AdjustPikCount(player, 1)
                 end
 
                 -- Save state afterwards in case the player exits
@@ -100,6 +99,13 @@ function PikPickup:onUpdate(player)
             entity:Remove()
         end
     end
+end
+
+-- Modify the number of piks the player has, invalidating the pik familiars afterwards.
+function PikPickup:AdjustPikCount(player, amount)
+
+    player:GetData().Piks = math.max(0, math.min(player:GetData().Piks + amount, MAX_PIKS))
+    PikPickup:InvalidatePiks(player)
 end
 
 -- Invalidates the familiar cache to despawn/respawn necessary piks

@@ -18,7 +18,8 @@
         "EntityGridCollisionClass",
         "EntityPartition",
         "EntityRef",
-        "CollectibleType"
+        "CollectibleType",
+        "DamageFlag"
     ],
     "editor.wordWrap": "on"
 }

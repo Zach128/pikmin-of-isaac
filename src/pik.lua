@@ -3,6 +3,7 @@ local Pik = {}
 
 Helpers = require("helpers")
 PikBoid = require("pik_boid")
+PikPickup = require("pik_pickup")
 
 -- Define enums
 FamiliarVariant.PIK = Isaac.GetEntityVariantByName("Pik")
@@ -17,6 +18,8 @@ PikState = {
     ACTIVE_SHAKEOFF = 7,
     ACTIVE_DISMISS = 8,
 }
+
+local damagePerCycle = 2
 
 -- Player trigger radious and offsets round a planted pik.
 local plantedCollisionRadius = {
@@ -40,7 +43,7 @@ function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
         for x = 1,1 do
             for y = 1,1 do
-                Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.PIK, 0, Vector(270 + 50*x, 200 + 50*y), Vector(0,0), nil):ToFamiliar()
+                -- Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.PIK, 0, Vector(270 + 50*x, 200 + 50*y), Vector(0,0), nil):ToFamiliar()
             end
         end
     end
@@ -61,14 +64,18 @@ function Pik:PikUpdate(entity)
     -- Initialise the base data and state
     if data.State == nil then data.State = 0 end
     if data.StateFrame == nil then data.StateFrame = 0 end
+    if data.PikDied == nil then data.PikDied = false end
 
     data.StateFrame = data.StateFrame + 1
+
+    if entity:HasMortalDamage() then
+        Isaac.DebugString("Oh No! The pik has diedeuh!")
+        PikPickup:AdjustPikCount(Isaac.GetPlayer(0), -1)
+    end
     
     -- Print basic debug data.
     Isaac.DebugString(string.format("State: %s", Helpers:ResolveTableKey(NpcState, entity.State)))
     Isaac.DebugString(string.format("PikState: %s", Helpers:ResolveTableKey(PikState, data.State)))
-    
-    -- Immediately go to the dismissal state.
 
     -- Handle the pik's planted states.
     Pik:Planted(entity)
@@ -126,7 +133,7 @@ function Pik:Attack(entity)
                 
                 -- Attack the target, in sync with the attack animation.
                 if sprite:IsEventTriggered("Attack1") then
-                    entity.Target:TakeDamage(0.1, 0, EntityRef(entity), 1)
+                    entity.Target:TakeDamage(damagePerCycle, 0, EntityRef(entity), 1)
                 end
             end
         end
@@ -343,6 +350,28 @@ function Pik:GiveSpiderMod(continuedGame)
     end
 end
 
+function Pik:OnDamage(entity, amount, flags, src, countdown)
+    -- Only allow damage by explosions. We only want 
+    if entity.Type == EntityType.ENTITY_FAMILIAR and entity.Variant == FamiliarVariant.PIK then
+        if flags & DamageFlag.DAMAGE_EXPLOSION then
+            Isaac.DebugString("Damage to Pik by entity " .. Helpers:ResolveTableKey(EntityType, src.Type))
+
+            return true
+        else
+            return false
+        end
+    end
+end
+
+function Pik:OnDeath(entity, elm)
+
+    -- if entity.Variant == FamiliarVariant.PIK then
+    --     Isaac.DebugString(tostring(elm))
+    --     Isaac.DebugString("Pik died!")
+    --     PikPickup:AdjustPikCount(Isaac.GetPlayer(0), -1)
+    -- end
+end
+
 function Pik:InjectCallbacks(Mod)
     Mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, Pik.GiveSpiderMod)
     Mod:AddCallback(ModCallbacks.MC_POST_RENDER, Pik.RenderDebugStr)
@@ -350,6 +379,8 @@ function Pik:InjectCallbacks(Mod)
     Mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, Pik.onCache)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, Pik.OnPikSpawn, FamiliarVariant.PIK)
     Mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, Pik.PikUpdate, FamiliarVariant.PIK)
+    Mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, Pik.OnDamage, EntityType.ENTITY_FAMILIAR)
+    Mod:AddCallback(ModCallbacks.MC_POST_ENTITY_KILL, Pik.OnDeath, EntityType.ENTITY_FAMILIAR)
     Mod:AddCallback(ModCallbacks.MC_PRE_FAMILIAR_COLLISION, Pik.onCollision, FamiliarVariant.PIK)
 end
 
