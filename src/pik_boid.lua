@@ -6,10 +6,11 @@ local PikBoid = {}
 -- The final speed is campled to 0 if smaller than this.
 PikBoid.ClampToTarget = 1
 -- The final speed is limited by this amount
-PikBoid.SpeedLimit = 5
+PikBoid.SpeedLimit = 1
 PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
-PikBoid.SpacingTarget = 30
+PikBoid.SpacingTarget = 25
+PikBoid.LastFrameUpdate = 0
 
 local DebugTarget = Sprite()
 local EnableDebugTargetDestinations = true
@@ -28,8 +29,12 @@ end
 function PikBoid:UpdateBoid(piks)
 
     local v1, v2, v3, v4
+    local currFrame = Game():GetFrameCount()
 
     Isaac.DebugString("Updating boids")
+
+    -- Only run once per-frame
+    if currFrame == PikBoid.LastFrameUpdate then return end
 
     for i,targetPik in ipairs(piks)
     do
@@ -38,23 +43,20 @@ function PikBoid:UpdateBoid(piks)
         v3 = PikBoid:CalculateCohesion(piks, targetPik)
         v4 = PikBoid:TendToPlace(targetPik)
 
-        Isaac.DebugString("  Calculating boid for pik " .. tostring(i))
-
-        for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
-        do
-            Isaac.DebugString("    Entered inequality iterator with pik " .. tostring(otherPik))
-        end
-
         local finalVelocity = v1 + v2 + v3 + v4
         
-        PikBoid:LimitVelocity(finalVelocity)
+        -- PikBoid:LimitVelocity(finalVelocity)
         PikBoid:SoftenTargetApproach(finalVelocity)
 
         Isaac.DebugString("  Boid calc finished with result " .. finalVelocity.X .. ", " .. finalVelocity.Y)
 
+        targetPik:ToFamiliar():FollowPosition(finalVelocity)
+
+        -- targetPik.Position = targetPik.Position + finalVelocity
         table.insert(DebugTargetPositions, finalVelocity)
     end
 
+    PikBoid.LastFrameUpdate = Game():GetFrameCount()
 end
 
 function PikBoid:CalculateSeparation(piks, targetPik)
@@ -76,8 +78,8 @@ function PikBoid:CalculateAlignment(piks, targetPik)
   
   for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
   do    
-    if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
-      finalVector = finalVector - (otherPik.Position - targetPik.Position)
+    if (otherPik.Position - targetPik.Position):Length() < PikBoid.SpacingTarget then
+      finalVector = finalVector - (otherPik.Position - targetPik.Position) * 0.5
     end
   end
   
@@ -101,7 +103,8 @@ end
 -- Set a goal for the boid to move to a target position.
 function PikBoid:TendToPlace(pik)
   local target = Isaac.GetPlayer(0).Position
-  return (target - pik.Position) / (100 - PikBoid.SpeedCoefficient)
+  return target
+  -- return (target - pik.Position) / (100 - PikBoid.SpeedCoefficient)
 end
 
 -- Higher-order iterator for boid calculations which iterates over every element NOT equal to the given filter.

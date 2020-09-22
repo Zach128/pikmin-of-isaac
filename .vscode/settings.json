@@ -19,7 +19,8 @@
         "EntityPartition",
         "EntityRef",
         "CollectibleType",
-        "DamageFlag"
+        "DamageFlag",
+        "Pathfinder"
     ],
     "editor.wordWrap": "on"
 }
