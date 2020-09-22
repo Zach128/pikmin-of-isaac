@@ -11,6 +11,12 @@ PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
 PikBoid.SpacingTarget = 30
 
+local DebugTarget = Sprite()
+local EnableDebugTargetDestinations = true
+local DebugTargetPositions = {}
+DebugTarget:Load("gfx/debug_target.anm2", true)
+DebugTarget:SetFrame("Idle", 0)
+
 function PikBoid:UpdateJustStayAway(piks, entity)
   local addedVector = PikBoid:CalculateAlignment(piks, entity)
 
@@ -46,7 +52,7 @@ function PikBoid:UpdateBoid(piks)
 
         Isaac.DebugString("  Boid calc finished with result " .. finalVelocity.X .. ", " .. finalVelocity.Y)
 
-        targetPik.Velocity = finalVelocity
+        table.insert(DebugTargetPositions, finalVelocity)
     end
 
 end
@@ -142,6 +148,25 @@ function PikBoid:SoftenTargetApproach(v)
   end
 
   return v
+end
+
+function PikBoid:OnRender()
+  if EnableDebugTargetDestinations then
+    local coord = Vector(25, 25)
+  
+    for i, pos in ipairs(DebugTargetPositions) do
+      coord = Isaac.WorldToScreen(pos)
+  
+      Isaac.DebugString("Debug target " .. coord.X .. ", " .. coord.Y)
+  
+      DebugTarget:RenderLayer(0, coord)
+      table.remove(DebugTargetPositions, i)
+    end
+  end
+end
+
+function PikBoid:InjectCallbacks(Mod)
+  Mod:AddCallback(ModCallbacks.MC_POST_RENDER, PikBoid.OnRender)
 end
 
 return PikBoid
