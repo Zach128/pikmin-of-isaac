@@ -18,6 +18,8 @@ local DebugTargetPositions = {}
 DebugTarget:Load("gfx/debug_target.anm2", true)
 DebugTarget:SetFrame("Idle", 0)
 
+PikBoid.PlayerGatherRadius = 20
+
 function PikBoid:UpdateJustStayAway(piks, entity)
   local addedVector = PikBoid:CalculateAlignment(piks, entity)
 
@@ -28,49 +30,60 @@ end
 
 function PikBoid:UpdateBoid(piks)
 
-    local v1, v2, v3, v4
-    local currFrame = Game():GetFrameCount()
+  local v1, v2, v3, v4
+  local currFrame = Game():GetFrameCount()
 
-    Isaac.DebugString("Updating boids")
+  Isaac.DebugString("Updating boids")
 
-    -- Only run once per-frame
-    if currFrame == PikBoid.LastFrameUpdate then return end
+  -- Only run once per-frame
+  if currFrame == PikBoid.LastFrameUpdate then return end
 
-    for i,targetPik in ipairs(piks)
-    do
-        v1 = PikBoid:CalculateSeparation(piks, targetPik)
-        v2 = PikBoid:CalculateAlignment(piks, targetPik)
-        v3 = PikBoid:CalculateCohesion(piks, targetPik)
-        v4 = PikBoid:TendToPlace(targetPik)
+  for i,targetPik in ipairs(piks)
+  do
 
-        local finalVelocity = v1 + v2 + v3 + v4
-        
-        -- PikBoid:LimitVelocity(finalVelocity)
-        PikBoid:SoftenTargetApproach(finalVelocity)
+    local finalVector;
 
-        Isaac.DebugString("  Boid calc finished with result " .. finalVelocity.X .. ", " .. finalVelocity.Y)
+    v1 = PikBoid:MoveToPlayer(targetPik)
+    -- v2 = PikBoid:CalculateAlignment(piks, targetPik)
+    -- v3 = PikBoid:CalculateCohesion(piks, targetPik)
+    -- v4 = PikBoid:TendToPlace(targetPik)
 
-        targetPik:ToFamiliar():FollowPosition(finalVelocity)
+    finalVector = v1
 
-        -- targetPik.Position = targetPik.Position + finalVelocity
-        table.insert(DebugTargetPositions, finalVelocity)
+    -- If the final vector is greater than a certain threshold, we will follow it. Else, we will stop.
+    if finalVector:Length() > 0.2 then
+      targetPik:ToFamiliar():FollowPosition(finalVector)
+      table.insert(DebugTargetPositions, finalVector)
+    else
+      -- Do a basic deceleration towards stopping.
+      if targetPik.Velocity:Length() > 0.1 then
+        targetPik.Velocity = targetPik.Velocity * 0.9
+      else
+        targetPik.Velocity = targetPik.Velocity * 0
+      end
     end
 
-    PikBoid.LastFrameUpdate = Game():GetFrameCount()
+  end
+
+  PikBoid.LastFrameUpdate = Game():GetFrameCount()
 end
 
-function PikBoid:CalculateSeparation(piks, targetPik)
-  local finalVector = Vector(0, 0)
-  local totalPiks = #piks
-  
-  for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
-  do
-    finalVector = finalVector + otherPik.Position
+-- Make the piks seek out player
+function PikBoid:MoveToPlayer(targetPik)
+  local player = Isaac.GetPlayer(0)
+  local pikDist = targetPik.Position:Distance(player.Position)
+
+  Isaac.DebugString("Pik dist: " .. pikDist)
+
+  -- If the player is too far away, seek them out.
+  if pikDist > PikBoid.PlayerGatherRadius then
+
+    local targetPosition = player.Position - (player.Position - targetPik.Position):Normalized()
+
+    return targetPosition
+  else
+    return Vector(0, 0)
   end
-  
-  finalVector = finalVector / (totalPiks - 1)
-  
-  return (finalVector - targetPik.Position) / 100
 end
 
 function PikBoid:CalculateAlignment(piks, targetPik)
