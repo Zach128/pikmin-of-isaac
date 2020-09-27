@@ -45,8 +45,6 @@ function PikBoid:UpdateBoid(piks)
 
     v1 = PikBoid:MoveToPlayer(targetPik)
     v2 = PikBoid:SeparateTargets(piks, targetPik)
-    -- v3 = PikBoid:CalculateCohesion(piks, targetPik)
-    -- v4 = PikBoid:TendToPlace(targetPik)
 
     finalVector = v1
 
@@ -110,27 +108,6 @@ function PikBoid:SeparateTargets(piks, targetPik)
   return finalVector
 end
 
-function PikBoid:CalculateCohesion(piks, targetPik)
-  local finalVector = Vector(0, 0)
-  local totalPiks = #piks
-  
-  for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
-  do
-    finalVector = finalVector + otherPik.Velocity
-  end
-  
-  finalVector = finalVector / (totalPiks - 1)
-  
-  return (finalVector - targetPik.Velocity) / 8
-end
-
--- Set a goal for the boid to move to a target position.
-function PikBoid:TendToPlace(pik)
-  local target = Isaac.GetPlayer(0).Position
-  return target
-  -- return (target - pik.Position) / (100 - PikBoid.SpeedCoefficient)
-end
-
 -- Higher-order iterator for boid calculations which iterates over every element NOT equal to the given filter.
 function PikBoid:NotEqualIterator(pik,piks)
     local index = 0
@@ -154,24 +131,11 @@ function PikBoid:NotEqualIterator(pik,piks)
     end
 end
 
-function PikBoid:AbsVector(vec)
-  return Vector(math.abs(vec.X), math.abs(vec.Y))
-end
-
 function PikBoid:LimitVelocity(v)
   local limit = PikBoid.SpeedLimit
 
   if v:Length() > limit then
     v:Resize(limit)
-  end
-
-  return v
-end
-
-function PikBoid:SoftenTargetApproach(v)
-  if math.abs(v:Length()) < PikBoid.ClampToTarget then
-    v.X = 0
-    v.Y = 0
   end
 
   return v
