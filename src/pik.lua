@@ -21,7 +21,7 @@ PikState = {
 
 local damagePerCycle = 2
 
--- Player trigger radious and offsets round a planted pik.
+-- Player trigger radii and offsets round a planted pik.
 local plantedCollisionRadius = {
     X = 15,
     XOff = 0,
@@ -177,16 +177,18 @@ function Pik:Active(entity)
         end
 
         -- Check if the target is dead, in case something got to it first.
-        if entity.Target:IsDead() then
-            -- If our target is dead, the attack job is done; go back to following the player.
-            entity.Target = nil
-
-            Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
-        elseif entity.Target ~= nil then
-            entity:FollowPosition(entity.Target.Position)
-
-            PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
-            -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+        if entity.Target ~= nil then
+            if entity.Target:IsDead() then
+                -- If our target is dead, the attack job is done; go back to following the player.
+                entity.Target = nil
+    
+                Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
+            else
+                entity:FollowPosition(entity.Target.Position)
+    
+                PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
+                -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+            end
         end
     end
 end
