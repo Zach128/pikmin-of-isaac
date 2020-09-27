@@ -9,7 +9,7 @@ PikBoid.ClampToTarget = 1
 PikBoid.SpeedLimit = 1
 PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
-PikBoid.SpacingTarget = 25
+PikBoid.SpacingTarget = 15
 PikBoid.LastFrameUpdate = 0
 
 local DebugTarget = Sprite()
@@ -18,10 +18,10 @@ local DebugTargetPositions = {}
 DebugTarget:Load("gfx/debug_target.anm2", true)
 DebugTarget:SetFrame("Idle", 0)
 
-PikBoid.PlayerGatherRadius = 20
+PikBoid.PlayerGatherRadius = 50
 
 function PikBoid:UpdateJustStayAway(piks, entity)
-  local addedVector = PikBoid:CalculateAlignment(piks, entity)
+  local addedVector = PikBoid:SeparateTargets(piks, entity)
 
   addedVector = PikBoid:LimitVelocity(addedVector)
 
@@ -44,17 +44,27 @@ function PikBoid:UpdateBoid(piks)
     local finalVector;
 
     v1 = PikBoid:MoveToPlayer(targetPik)
-    -- v2 = PikBoid:CalculateAlignment(piks, targetPik)
+    v2 = PikBoid:SeparateTargets(piks, targetPik)
     -- v3 = PikBoid:CalculateCohesion(piks, targetPik)
     -- v4 = PikBoid:TendToPlace(targetPik)
 
     finalVector = v1
 
-    -- If the final vector is greater than a certain threshold, we will follow it. Else, we will stop.
+    -- Begin by checking that the pik isn't approaching it's resting position.
+    -- How we calculate the vectors from here on differs according to the above condition.
     if finalVector:Length() > 0.2 then
+      -- If heading to a target, our final vector is the sum of all previous rules.
+      finalVector = v1 + v2
+
       targetPik:ToFamiliar():FollowPosition(finalVector)
+
       table.insert(DebugTargetPositions, finalVector)
     else
+      -- If at target, our final vector is all previous rules with the piks' current position as the target.
+      finalVector = targetPik.Position + v2
+
+      targetPik:ToFamiliar():FollowPosition(finalVector)
+
       -- Do a basic deceleration towards stopping.
       if targetPik.Velocity:Length() > 0.1 then
         targetPik.Velocity = targetPik.Velocity * 0.9
@@ -86,13 +96,14 @@ function PikBoid:MoveToPlayer(targetPik)
   end
 end
 
-function PikBoid:CalculateAlignment(piks, targetPik)
+function PikBoid:SeparateTargets(piks, targetPik)
   local finalVector = Vector(0, 0)
   
+  -- For every other pik, if the distance between is too great, move them away by the desired spacing.
   for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
-  do    
-    if (otherPik.Position - targetPik.Position):Length() < PikBoid.SpacingTarget then
-      finalVector = finalVector - (otherPik.Position - targetPik.Position) * 0.5
+  do
+    if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
+      finalVector = (finalVector - (otherPik.Position - targetPik.Position)):Normalized() * PikBoid.SpacingTarget
     end
   end
   
