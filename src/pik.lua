@@ -176,7 +176,13 @@ function Pik:Active(entity)
             sprite:Play("Idle", true)
         end
 
-        if entity.Target ~= nil then
+        -- Check if the target is dead, in case something got to it first.
+        if entity.Target:IsDead() then
+            -- If our target is dead, the attack job is done; go back to following the player.
+            entity.Target = nil
+
+            Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
+        elseif entity.Target ~= nil then
             entity:FollowPosition(entity.Target.Position)
 
             PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
