@@ -12,8 +12,8 @@ PikBoid.SpeedCoefficient = 1
 PikBoid.SpacingTarget = 15
 PikBoid.LastFrameUpdate = 0
 
+PikBoid.EnableDebugTargetDestinations = false
 local DebugTarget = Sprite()
-local EnableDebugTargetDestinations = true
 local DebugTargetPositions = {}
 DebugTarget:Load("gfx/debug_target.anm2", true)
 DebugTarget:SetFrame("Idle", 0)
@@ -142,7 +142,7 @@ function PikBoid:LimitVelocity(v)
 end
 
 function PikBoid:OnRender()
-  if EnableDebugTargetDestinations then
+  if PikBoid.EnableDebugTargetDestinations then
     local coord = Vector(25, 25)
   
     for i, pos in ipairs(DebugTargetPositions) do
