@@ -98,10 +98,15 @@ function PikBoid:SeparateTargets(piks, targetPik)
   local finalVector = Vector(0, 0)
   
   -- For every other pik, if the distance between is too great, move them away by the desired spacing.
-  for otherPik in PikBoid:NotEqualIterator(targetPik,piks)
+  for otherPik, i in PikBoid:NotEqualIterator(targetPik,piks)
   do
     if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
       finalVector = (finalVector - (otherPik.Position - targetPik.Position)):Normalized() * PikBoid.SpacingTarget
+
+      -- If piks are exactly over eachother, nudge them away.
+      if finalVector:Length() == 0 then
+        finalVector = Vector(i, i + i % 5)
+      end
     end
   end
   
@@ -125,7 +130,7 @@ function PikBoid:NotEqualIterator(pik,piks)
             -- increment and return the element.
             elseif piks[index] == pik and index < count then
                 index = index + 1
-                return piks[index]
+                return piks[index], index
             end
         end
     end
