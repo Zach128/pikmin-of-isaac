@@ -105,7 +105,7 @@ function PikBoid:SeparateTargets(piks, targetPik)
 
       -- If piks are exactly over eachother, nudge them away.
       if finalVector:Length() == 0 then
-        finalVector = Vector(i, i + i % 5)
+        finalVector = Vector(i, i + 1 % 5)
       end
     end
   end
@@ -125,7 +125,7 @@ function PikBoid:NotEqualIterator(pik,piks)
         if index <= count then
             -- If the element is not equal to the filter value, return it.
             if piks[index] ~= pik then
-                return piks[index]
+                return piks[index], index
             -- If the element matches, and there are still elements after this one to loop over,
             -- increment and return the element.
             elseif piks[index] == pik and index < count then
