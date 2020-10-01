@@ -21,7 +21,7 @@ PikState = {
 
 local damagePerCycle = 2
 
--- Player trigger radious and offsets round a planted pik.
+-- Player trigger radii and offsets round a planted pik.
 local plantedCollisionRadius = {
     X = 15,
     XOff = 0,
@@ -176,11 +176,19 @@ function Pik:Active(entity)
             sprite:Play("Idle", true)
         end
 
+        -- Check if the target is dead, in case something got to it first.
         if entity.Target ~= nil then
-            entity:FollowPosition(entity.Target.Position)
-
-            PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
-            -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+            if entity.Target:IsDead() then
+                -- If our target is dead, the attack job is done; go back to following the player.
+                entity.Target = nil
+    
+                Pik:SetState(entity, PikState.ACTIVE_FOLLOW)
+            else
+                entity:FollowPosition(entity.Target.Position)
+    
+                PikBoid:UpdateJustStayAway(Pik:GetRoomCollideablePiks(), entity)
+                -- debugRenderStr = "Chasing vector " .. entity.TargetPosition.X .. ", " .. entity.TargetPosition.Y
+            end
         end
     end
 end
@@ -313,10 +321,55 @@ function Pik:onCache(player, cacheFlag)
     -- Perform cache-related checks here such as ensuring expected on-screen pik count is met.
     if cacheFlag == CacheFlag.CACHE_FAMILIARS then
         -- If the player data was initialised, check that the appropriate piks are present.
-        if player:GetData().Piks ~= nil then
-            player:CheckFamiliar(FamiliarVariant.PIK, player:GetData().Piks, RNG())
+        local pikCount = player:GetData().Piks
+        
+        if pikCount ~= nil then
+            local allPiks = Pik:GetAllPiks()
+
+            -- CheckFamiliars does not properly handle our use case, leaving one "phantom" pik, even when all piks should be dead.
+            -- So we must create our own "CheckFamiliar" routine.
+            if #allPiks > pikCount then
+                -- Remove excess piks from the room
+                for i = 1, #allPiks - pikCount, 1
+                do
+                    allPiks[i]:Kill()
+                end
+            elseif #allPiks < pikCount then
+                -- Spawn as many piks on the player as needed to meet the expected amount.
+                for i = 1, pikCount - #allPiks, 1
+                do
+                    Isaac.Spawn(
+                        EntityType.ENTITY_FAMILIAR,
+                        FamiliarVariant.PIK,
+                        0,
+                        player.Position,
+                        Vector(0, 0),
+                        player
+                    )
+                end
+            end
+
+            -- player:CheckFamiliar(FamiliarVariant.PIK, player:GetData().Piks - 1, RNG())
         end
     end
+end
+
+function Pik:GetAllPiks()
+    -- Get a list of all piks in the room.
+
+    local allEntities = Isaac.GetRoomEntities()
+    local pikEntities = {}
+
+    for i,entity in pairs(allEntities)
+    do
+        if entity.Type == EntityType.ENTITY_FAMILIAR
+        and entity.Variant == FamiliarVariant.PIK
+        then
+            table.insert(pikEntities, entity)
+        end
+    end
+
+    return pikEntities
 end
 
 function Pik:GetRoomCollideablePiks()
