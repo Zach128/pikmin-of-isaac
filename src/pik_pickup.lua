@@ -13,29 +13,29 @@ PikSubType = {
 -- Screen coordinates for Pik UI
 PikUILayout = {
     PIK_FRAME = 12,
-    PIK_ICON = Vector(28, 32),
-    PIK_NUM = Vector(42, 36)
+    PIK_ICON = Vector(26, 32),
+    PIK_NUM = Vector(40, 33)
 }
 
 local MAX_PIKS = 99
 
+local PickupFont = Font()
+PickupFont:Load("font/pftempestasevencondensed.fnt")
+
 -- Fetch necessary graphics
 local HudPickups = Sprite()
 HudPickups:Load("gfx/ui/hudpickups.anm2", true)
-local HudNumbers = Sprite()
-HudNumbers:Load("font/counter_numbers.anm2", true)
 
 PikPickup.Mod = nil
 
 -- Render a 2-digit number.
 function RenderNumber(n, Position)
     if n == nil then n = 0 end
-    -- Second digit
-    HudNumbers:SetFrame("Idle", n//10)
-    HudNumbers:RenderLayer(0, Position)
-    -- First digit
-    HudNumbers:SetFrame("Idle", n % 10)
-    HudNumbers:RenderLayer(0, Position + Vector(6,0))
+    
+    local nStr = tostring(n)
+    -- If n is a single digit, pad it with a '0'
+    if #nStr == 1 then nStr = "0" .. nStr end
+    PickupFont:DrawString(nStr, Position.X, Position.Y, KColor(1,1,1,1,0,0,0), 0, true)
 end
 
 -- Save the current state accordingly.

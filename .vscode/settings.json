@@ -20,7 +20,9 @@
         "EntityRef",
         "CollectibleType",
         "DamageFlag",
-        "Pathfinder"
+        "Pathfinder",
+        "Font",
+        "KColor"
     ],
     "editor.wordWrap": "on"
 }
