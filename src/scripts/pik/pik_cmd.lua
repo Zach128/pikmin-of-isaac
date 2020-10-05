@@ -1,5 +1,5 @@
-local helpers = require("helpers")
-local PikBoid = require("pik_boid")
+local helpers = require("scripts/helpers")
+local PikBoid = require("scripts/pik/pik_boid")
 
 local PikCmd = {}
 local DebugHelpText = [[Pikmin Debug <cmd> [args]

@@ -1,9 +1,9 @@
 local game = Game()
 local Pik = {}
 
-Helpers = require("helpers")
-PikBoid = require("pik_boid")
-PikPickup = require("pik_pickup")
+Helpers = require("scripts/helpers")
+PikBoid = require("scripts/pik/pik_boid")
+PikPickup = require("scripts/pik/pik_pickup")
 
 -- Define enums
 FamiliarVariant.PIK = Isaac.GetEntityVariantByName("Pik")
