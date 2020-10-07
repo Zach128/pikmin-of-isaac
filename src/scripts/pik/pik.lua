@@ -2,13 +2,13 @@ local game = Game()
 local Pik = {}
 
 -- Load globals
-require("scripts/pik/pik_enums")
-require("scripts/pik/pik_config")
+require("scripts.pik.pik_enums")
+require("scripts.pik.pik_config")
 
-Helpers = require("scripts/helpers")
-PikBoid = require("scripts/pik/pik_boid")
-PikPickup = require("scripts/pik/pik_pickup")
-PikAi = require("scripts/pik/pik_ai")
+Helpers = require("scripts.Helpers")
+PikBoid = require("scripts.pik.pik_boid")
+PikPickup = require("scripts.pik.pik_pickup")
+PikAi = require("scripts.pik.pik_ai")
 
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then

@@ -1,5 +1,4 @@
--- Boid behaviour coordinator heavily based on the following work by Conrad Parker: http://www.kfish.org/boids/pseudocode.html
-
+local Helpers = require("scripts.helpers")
 
 local PikBoid = {}
 
@@ -89,7 +88,7 @@ function PikBoid:SeparateTargets(piks, targetPik)
   local finalVector = Vector(0, 0)
   
   -- For every other pik, if the distance between is too great, move them away by the desired spacing.
-  for otherPik, i in PikBoid:NotEqualIterator(targetPik,piks)
+  for otherPik, i in Helpers:NotEqualIterator(targetPik,piks)
   do
     if otherPik.Position:Distance(targetPik.Position) < PikConfig.Following.SpacingTarget then
       finalVector = (finalVector - (otherPik.Position - targetPik.Position)):Normalized() * PikConfig.Following.SpacingTarget
@@ -102,29 +101,6 @@ function PikBoid:SeparateTargets(piks, targetPik)
   end
   
   return finalVector
-end
-
--- Higher-order iterator for boid calculations which iterates over every element NOT equal to the given filter.
-function PikBoid:NotEqualIterator(pik,piks)
-    local index = 0
-    local count = #piks -- Get the total length of the collection.
-
-    return function ()
-        index = index + 1
-        
-        -- If we still have elements left to iterate over
-        if index <= count then
-            -- If the element is not equal to the filter value, return it.
-            if piks[index] ~= pik then
-                return piks[index], index
-            -- If the element matches, and there are still elements after this one to loop over,
-            -- increment and return the element.
-            elseif piks[index] == pik and index < count then
-                index = index + 1
-                return piks[index], index
-            end
-        end
-    end
 end
 
 function PikBoid:LimitVelocity(v)

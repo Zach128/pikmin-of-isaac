@@ -1,4 +1,4 @@
-local helpers = require("scripts/helpers")
+local Helpers = require("scripts.helpers")
 
 local PikCmd = {}
 local DebugHelpText = [[Pikmin Debug <cmd> [args]
@@ -14,7 +14,7 @@ Available variables:
 function PikCmd:OnCmd(cmd, args)
     -- Command module entrypoint
     if CommandIs(cmd, "pikmin") then
-        local splitArgs = helpers:strSplit(args, " ")
+        local splitArgs = Helpers:strSplit(args, " ")
         
         -- Command detection
         if CommandIs(splitArgs[1], "help") then

@@ -113,7 +113,7 @@ function PikAi:Active(entity)
 
         -- Follow the player.
         local piks = PikAi:GetRoomCollideablePiks()
-        PikBoid:UpdateBoid(piks)
+        PikBoid:UpdateBoid(piks, entity)
 
         Isaac.DebugString("Checking for enemy! Also note collision set to " .. Helpers:ResolveTableKey(EntityCollisionClass, entity.EntityCollisionClass))
         PikAi:PickEnemyTarget(entity)
