@@ -1,13 +1,14 @@
 local game = Game()
 local Pik = {}
 
+-- Load globals
 require("scripts/pik/pik_enums")
+require("scripts/pik/pik_config")
+
 Helpers = require("scripts/helpers")
 PikBoid = require("scripts/pik/pik_boid")
 PikPickup = require("scripts/pik/pik_pickup")
 PikAi = require("scripts/pik/pik_ai")
-
-local debugUsingHealthBars = true
 
 function Pik:SpawnPiks(player)
     if game:GetFrameCount() == 1 then
@@ -77,8 +78,13 @@ end
 function Pik:GiveSpiderMod(continuedGame)
     -- Give the Spider Mod collectible to display enemy healthbars.
 
-    if debugUsingHealthBars and not continuedGame then
-        Isaac.GetPlayer(0):AddCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD, 0, true)
+    local player = Isaac.GetPlayer(0)
+    local hasSpiderMod = player:HasCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD)
+
+    if PikConfig.DebugUsingHealthBars and not hasSpiderMod then
+        player:AddCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD, 0, true)
+    elseif not PikConfig.DebugUsingHealthBars and hasSpiderMod then
+        player:RemoveCollectible(CollectibleType.COLLECTIBLE_SPIDER_MOD)
     end
 end
 

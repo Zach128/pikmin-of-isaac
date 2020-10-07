@@ -1,8 +1,6 @@
 local game = Game()
 local PikAi = {}
 
-local damagePerCycle = 2
-
 -- Player trigger radii and offsets round a planted pik.
 local plantedCollisionRadius = {
     X = 15,
@@ -87,7 +85,7 @@ function PikAi:Attack(entity)
                 
                 -- Attack the target, in sync with the attack animation.
                 if sprite:IsEventTriggered("Attack1") then
-                    entity.Target:TakeDamage(damagePerCycle, 0, EntityRef(entity), 1)
+                    entity.Target:TakeDamage(PikConfig.DamagePerCycle, 0, EntityRef(entity), 1)
                 end
             end
         end

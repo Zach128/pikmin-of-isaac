@@ -1,5 +1,4 @@
 local helpers = require("scripts/helpers")
-local PikBoid = require("scripts/pik/pik_boid")
 
 local PikCmd = {}
 local DebugHelpText = [[Pikmin Debug <cmd> [args]
@@ -44,11 +43,11 @@ function PikCmd:SetVar(rawArgs)
             -- Enable rendering of debug targets
             
             if CommandIs(args[2], "true") then
-                print("Was: " .. tostring(PikBoid.EnableDebugTargetDestinations) .. " Now: true")
-                PikBoid.EnableDebugTargetDestinations = true
+                print("Was: " .. tostring(PikConfig.Following.EnableDebugTargetDestinations) .. " Now: true")
+                PikConfig.Following.EnableDebugTargetDestinations = true
             elseif CommandIs(args[2], "false") then
-                print("Was: " .. tostring(PikBoid.EnableDebugTargetDestinations) .. " Now: false")
-                PikBoid.EnableDebugTargetDestinations = false
+                print("Was: " .. tostring(PikConfig.Following.EnableDebugTargetDestinations) .. " Now: false")
+                PikConfig.Following.EnableDebugTargetDestinations = false
             else
                 print("Invalid value. Valid values: true, false")
                 return

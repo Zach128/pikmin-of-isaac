@@ -3,22 +3,13 @@
 
 local PikBoid = {}
 
--- The final speed is campled to 0 if smaller than this.
-PikBoid.ClampToTarget = 1
--- The final speed is limited by this amount
-PikBoid.SpeedLimit = 1
-PikBoid.SpeedCoefficient = 1
 -- How much to separate from other piks
-PikBoid.SpacingTarget = 15
 PikBoid.LastFrameUpdate = 0
 
-PikBoid.EnableDebugTargetDestinations = false
 local DebugTarget = Sprite()
 local DebugTargetPositions = {}
 DebugTarget:Load("gfx/debug_target.anm2", true)
 DebugTarget:SetFrame("Idle", 0)
-
-PikBoid.PlayerGatherRadius = 50
 
 function PikBoid:UpdateJustStayAway(piks, entity)
   local addedVector = PikBoid:SeparateTargets(piks, entity)
@@ -30,7 +21,7 @@ end
 
 function PikBoid:UpdateBoid(piks)
 
-  local v1, v2, v3, v4
+  local v1, v2
   local currFrame = Game():GetFrameCount()
 
   Isaac.DebugString("Updating boids")
@@ -84,7 +75,7 @@ function PikBoid:MoveToPlayer(targetPik)
   Isaac.DebugString("Pik dist: " .. pikDist)
 
   -- If the player is too far away, seek them out.
-  if pikDist > PikBoid.PlayerGatherRadius then
+  if pikDist > PikConfig.Following.PlayerGatherRadius then
 
     local targetPosition = player.Position - (player.Position - targetPik.Position):Normalized()
 
@@ -100,8 +91,8 @@ function PikBoid:SeparateTargets(piks, targetPik)
   -- For every other pik, if the distance between is too great, move them away by the desired spacing.
   for otherPik, i in PikBoid:NotEqualIterator(targetPik,piks)
   do
-    if otherPik.Position:Distance(targetPik.Position) < PikBoid.SpacingTarget then
-      finalVector = (finalVector - (otherPik.Position - targetPik.Position)):Normalized() * PikBoid.SpacingTarget
+    if otherPik.Position:Distance(targetPik.Position) < PikConfig.Following.SpacingTarget then
+      finalVector = (finalVector - (otherPik.Position - targetPik.Position)):Normalized() * PikConfig.Following.SpacingTarget
 
       -- If piks are exactly over eachother, nudge them away.
       if finalVector:Length() == 0 then
@@ -137,7 +128,7 @@ function PikBoid:NotEqualIterator(pik,piks)
 end
 
 function PikBoid:LimitVelocity(v)
-  local limit = PikBoid.SpeedLimit
+  local limit = PikConfig.Following.SpeedLimit
 
   if v:Length() > limit then
     v:Resize(limit)
@@ -147,14 +138,14 @@ function PikBoid:LimitVelocity(v)
 end
 
 function PikBoid:OnRender()
-  if PikBoid.EnableDebugTargetDestinations then
+  if PikConfig.Following.EnableDebugTargetDestinations then
     local coord = Vector(25, 25)
-  
+
     for i, pos in ipairs(DebugTargetPositions) do
       coord = Isaac.WorldToScreen(pos)
-  
+
       Isaac.DebugString("Debug target " .. coord.X .. ", " .. coord.Y)
-  
+
       DebugTarget:RenderLayer(0, coord)
       table.remove(DebugTargetPositions, i)
     end
